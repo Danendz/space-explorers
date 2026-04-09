@@ -11,7 +11,7 @@ npm run dev
 
 Then open the printed localhost URL.
 
-## Controls
+## Controls (desktop)
 
 - **Click canvas** — engage pointer lock
 - **Mouse** — look around
@@ -20,6 +20,22 @@ Then open the printed localhost URL.
 - **Shift** — boost (10×)
 - **Scroll** — change base cruise speed
 - **Esc** — release pointer lock
+- **M** — mute / unmute music
+- **N** — next music track
+- **H** — show / hide the controls panel
+- **F** — toggle fullscreen
+
+## Controls (mobile)
+
+Touch devices are detected automatically. The desktop keybinds panel is hidden and replaced by a touch HUD:
+
+- **Left joystick** — fly / strafe
+- **Swipe the rest of the screen** — look around
+- **▲ / ▼ buttons** (right edge) — fly up / down
+- **» button** (right edge) — hold to boost (10×)
+- **First tap** starts ambient music, requests fullscreen, and tries to lock to landscape orientation (best-effort)
+
+Landscape orientation is recommended — a hint is shown on first launch and whenever the device is held in portrait.
 
 ## Earth textures
 
@@ -41,8 +57,11 @@ See `src/`:
 
 - `main.ts` — renderer, loop, resize
 - `scene/SpaceScene.ts` — owns all world objects
-- `controls/FlyControls.ts` — pointer-lock + WASD
+- `controls/FlyControls.ts` — pointer-lock + WASD (desktop) / external-input channel (touch)
+- `controls/TouchControls.ts` — virtual joystick + swipe-to-look + buttons
+- `controls/detectTouch.ts` — `pointer: coarse` detection
 - `objects/` — Earth, StarField, FeaturedStar, ProceduralPlanet, Nebula
 - `shaders/` — GLSL strings for custom materials
 - `world/` — seeded RNG + universe generator
-- `ui/` — HUD + hover labels
+- `ui/` — HUD, hover labels, fullscreen utility
+- `audio/` — procedural ambient music (Web Audio API)

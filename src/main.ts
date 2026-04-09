@@ -7,9 +7,17 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { CAMERA_FAR, CAMERA_FOV, CAMERA_NEAR, MASTER_SEED } from './config';
 import { SpaceScene } from './scene/SpaceScene';
 import { FlyControls } from './controls/FlyControls';
+import { TouchControls } from './controls/TouchControls';
+import { isTouchDevice } from './controls/detectTouch';
 import { HUD } from './ui/HUD';
 import { Labels } from './ui/Labels';
 import { AmbientMusic } from './audio/AmbientMusic';
+import {
+  enterFullscreen,
+  isFullscreen,
+  toggleFullscreen,
+  tryLockLandscape,
+} from './ui/fullscreen';
 
 const appEl = document.getElementById('app')!;
 const loadingEl = document.getElementById('loading')!;
@@ -36,11 +44,17 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 3, 20);
 camera.lookAt(0, 0, 0);
 
+// --- Mode detection ---------------------------------------------------------
+const touchMode = isTouchDevice();
+if (touchMode) document.body.classList.add('touch-mode');
+
 // --- World ------------------------------------------------------------------
 const scene = new SpaceScene(MASTER_SEED);
 
 // --- Controls ---------------------------------------------------------------
-const controls = new FlyControls(camera, renderer.domElement);
+const controls = new FlyControls(camera, renderer.domElement, {
+  mode: touchMode ? 'touch' : 'desktop',
+});
 
 // --- Audio ------------------------------------------------------------------
 const music = new AmbientMusic();
@@ -69,20 +83,52 @@ function nextTrack() {
 }
 
 // --- UI ---------------------------------------------------------------------
-const hud = new HUD({ onAudioToggle: toggleMusic, onNextTrack: nextTrack });
+const hud = new HUD({
+  onAudioToggle: toggleMusic,
+  onNextTrack: nextTrack,
+  onToggleFullscreen: () => void toggleFullscreen(document.documentElement),
+});
 hud.setTrackName(music.trackName);
+if (touchMode) hud.setTouchMode(true);
 const labels = new Labels(camera, scene.featuredStars);
 
-// Start music on first pointer-lock engagement (counts as user gesture).
+// --- Touch controls ---------------------------------------------------------
+let touchControls: TouchControls | null = null;
+if (touchMode) {
+  touchControls = new TouchControls(controls, () => {
+    // First touch = dismiss overlay, start music, request fullscreen, lock orientation.
+    if (!musicStarted) {
+      music.start();
+      musicStarted = true;
+      hud.setMuted(false);
+    }
+    document.getElementById('tap-to-explore')?.classList.add('hidden');
+    void enterFullscreen(document.documentElement).then(() => tryLockLandscape());
+  });
+}
+void touchControls;
+
+// Pointer lock → HUD (dim panel, hide click-to-start) and music start trigger.
 document.addEventListener('pointerlockchange', () => {
-  if (document.pointerLockElement === renderer.domElement && !musicStarted) {
+  const locked = document.pointerLockElement === renderer.domElement;
+  hud.setPointerLocked(locked);
+  if (locked && !musicStarted) {
     music.start();
     musicStarted = true;
     hud.setMuted(false);
   }
 });
 
-// Keyboard shortcuts: M = mute toggle, N = next track.
+// Fullscreen state → HUD icon swap (include webkit prefix for older iOS Safari).
+const onFullscreenChange = () => hud.setFullscreen(isFullscreen());
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+// Initial HUD state: pointer lock is off, so show click-to-start and keep
+// the instructions panel at full opacity. (No-op in touch mode.)
+hud.setPointerLocked(false);
+
+// Keyboard shortcuts: M = mute, N = next track, H = toggle instructions, F = fullscreen.
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') {
     if (!musicStarted) {
@@ -94,6 +140,10 @@ window.addEventListener('keydown', (e) => {
     hud.setMuted(music.muted);
   } else if (e.code === 'KeyN') {
     nextTrack();
+  } else if (e.code === 'KeyH') {
+    hud.toggleInstructions();
+  } else if (e.code === 'KeyF') {
+    void toggleFullscreen(document.documentElement);
   }
 });
 
@@ -133,7 +183,7 @@ function tick() {
   scene.update(dt, camera);
   hud.update(controls.currentSpeed, camera.position);
   labels.update();
-  music.update(dt, controls.isBoosting);
+  music.update(dt, controls.effectiveBoost);
   composer.render();
   requestAnimationFrame(tick);
 }

@@ -34,15 +34,101 @@
       }
       #readout .label { color: rgba(180, 200, 255, 0.55); margin-right: 6px; }
 
-      #hint {
-        position: absolute; left: 50%; top: 50%; transform: translate(-50%, 40px);
-        font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-        color: rgba(200, 215, 255, 0.75);
-        background: rgba(10, 14, 30, 0.55);
-        padding: 8px 14px; border-radius: 4px;
-        border: 1px solid rgba(120, 160, 255, 0.18);
+      @keyframes breathe {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
       }
-      #hint.hidden { display: none; }
+
+      #click-to-start {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: rgba(10, 14, 30, 0.55);
+        padding: 14px 28px; border-radius: 4px;
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        backdrop-filter: blur(6px);
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s;
+        animation: breathe 2.2s ease-in-out infinite;
+      }
+      #click-to-start .label {
+        font-size: 14px; letter-spacing: 0.28em; text-transform: uppercase;
+        color: rgba(220, 230, 255, 0.95);
+      }
+      #click-to-start .sub {
+        font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+        color: rgba(180, 200, 255, 0.55);
+        margin-top: 6px;
+      }
+      #click-to-start.hidden { opacity: 0; animation: none; }
+
+      #instructions {
+        position: absolute; right: 16px; bottom: 56px;
+        max-width: 260px;
+        background: rgba(10, 14, 30, 0.55);
+        padding: 10px 14px 12px;
+        border-radius: 4px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        backdrop-filter: blur(6px);
+        pointer-events: auto;
+        transition: opacity 0.25s;
+      }
+      #instructions.dimmed { opacity: 0.3; }
+      #instructions.dimmed:hover { opacity: 1; }
+      #instructions.hidden { display: none; }
+      .ins-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .ins-title {
+        font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgba(180, 200, 255, 0.55);
+      }
+      #ins-close {
+        width: 20px; height: 20px;
+        background: none; border: none; cursor: pointer;
+        color: rgba(200, 215, 255, 0.55);
+        font-size: 18px; line-height: 1;
+        padding: 0; display: flex; align-items: center; justify-content: center;
+        border-radius: 3px;
+        transition: color 0.15s, background 0.15s;
+      }
+      #ins-close:hover { color: rgba(220, 230, 255, 1); background: rgba(120, 160, 255, 0.12); }
+      .ins-grid {
+        display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+        font-size: 11px; color: rgba(200, 215, 255, 0.85);
+        align-items: center;
+      }
+      .ins-grid kbd {
+        padding: 2px 6px;
+        border: 1px solid rgba(120, 160, 255, 0.25);
+        border-radius: 3px;
+        background: rgba(10, 14, 30, 0.7);
+        font-size: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: rgba(220, 230, 255, 0.9);
+        white-space: nowrap;
+        justify-self: start;
+      }
+
+      #ins-reopen {
+        position: absolute; right: 16px; bottom: 56px;
+        width: 30px; height: 30px;
+        background: rgba(10, 14, 30, 0.55);
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        border-radius: 4px;
+        color: rgba(200, 215, 255, 0.85);
+        font-size: 14px; font-weight: 600;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(6px);
+        pointer-events: auto;
+        padding: 0;
+        transition: border-color 0.2s, background 0.2s;
+      }
+      #ins-reopen:hover { border-color: rgba(160, 190, 255, 0.4); background: rgba(20, 28, 50, 0.7); }
+      #ins-reopen.hidden { display: none; }
 
       #star-label {
         position: absolute; left: 50%; top: 50%; transform: translate(-50%, -28px);
@@ -107,6 +193,159 @@
         pointer-events: none;
       }
       #track-toast.visible { opacity: 1; }
+
+      /* Fullscreen toggle button (desktop + mobile) */
+      #fullscreen-toggle .fs-exit { display: none; }
+      body.is-fullscreen #fullscreen-toggle .fs-enter { display: none; }
+      body.is-fullscreen #fullscreen-toggle .fs-exit { display: block; }
+
+      /* -------------------- Mobile HUD -------------------- */
+      #mobile-hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+      #mobile-hud.hidden { display: none; }
+
+      #look-zone {
+        position: absolute; inset: 0;
+        pointer-events: auto;
+        z-index: 1;
+        background: transparent;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #joystick {
+        position: absolute; left: 32px; bottom: 32px;
+        width: 120px; height: 120px;
+        z-index: 3;
+        pointer-events: auto;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #joystick-base {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        background: rgba(10, 14, 30, 0.35);
+        border: 1px solid rgba(120, 160, 255, 0.25);
+        backdrop-filter: blur(4px);
+      }
+      #joystick-nub {
+        position: absolute; top: 50%; left: 50%;
+        width: 42px; height: 42px;
+        margin: -21px 0 0 -21px;
+        border-radius: 50%;
+        background: rgba(120, 160, 255, 0.5);
+        border: 1px solid rgba(180, 200, 255, 0.7);
+        transition: background 0.1s;
+        transform: translate(0, 0);
+        pointer-events: none;
+      }
+
+      #mobile-buttons {
+        position: absolute; right: 20px; bottom: 32px;
+        display: flex; flex-direction: column; gap: 10px;
+        z-index: 3;
+        pointer-events: auto;
+      }
+      .mobile-btn {
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        background: rgba(10, 14, 30, 0.55);
+        border: 1px solid rgba(120, 160, 255, 0.25);
+        color: rgba(220, 230, 255, 0.9);
+        font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(6px);
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
+        user-select: none;
+        padding: 0;
+      }
+      .mobile-btn.active {
+        background: rgba(30, 50, 90, 0.85);
+        border-color: rgba(180, 220, 255, 0.7);
+      }
+      .mobile-btn.boost { background: rgba(20, 32, 70, 0.6); font-size: 22px; }
+      .mobile-btn.boost.active {
+        border-color: rgba(255, 180, 80, 0.9);
+        background: rgba(60, 40, 20, 0.85);
+      }
+      .mobile-btn.small { width: 38px; height: 38px; font-size: 16px; }
+
+      #tap-to-explore {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 5;
+        pointer-events: auto;
+        opacity: 1;
+        transition: opacity 0.4s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #tap-to-explore.hidden { opacity: 0; pointer-events: none; }
+      #tap-to-explore .label {
+        font-size: 16px; letter-spacing: 0.3em; text-transform: uppercase;
+        color: rgba(220, 230, 255, 0.95);
+      }
+      #tap-to-explore .sub {
+        font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgba(180, 200, 255, 0.55);
+        margin-top: 8px;
+      }
+
+      .rotate-recommendation {
+        display: flex; flex-direction: column;
+        align-items: center; gap: 10px;
+        margin-bottom: 36px;
+        color: rgba(200, 215, 255, 0.85);
+      }
+      .rotate-text {
+        font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      }
+      .phone-rotate-icon {
+        width: 56px; height: 56px;
+        color: rgba(200, 215, 255, 0.85);
+        transform-origin: 50% 50%;
+        animation: phone-rotate 3s ease-in-out infinite;
+      }
+      @keyframes phone-rotate {
+        0%, 15% { transform: rotate(0deg); }
+        45%, 65% { transform: rotate(-90deg); }
+        95%, 100% { transform: rotate(0deg); }
+      }
+
+      #portrait-hint {
+        position: absolute; left: 50%; bottom: 16px;
+        transform: translateX(-50%);
+        background: rgba(10, 14, 30, 0.6);
+        padding: 6px 12px; border-radius: 4px;
+        font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+        color: rgba(200, 215, 255, 0.7);
+        display: none;
+        z-index: 4;
+        pointer-events: none;
+        text-align: center;
+      }
+      @media (orientation: portrait) {
+        body.touch-mode #portrait-hint { display: block; }
+        #mobile-buttons { right: 14px; gap: 8px; }
+      }
+
+      /* On touch devices, hide desktop-only widgets entirely via body class */
+      body.touch-mode #instructions,
+      body.touch-mode #ins-reopen,
+      body.touch-mode #click-to-start { display: none !important; }
+
+      /* On touch, move the speed/pos readout + audio controls to the TOP
+         so they don't collide with the joystick (bottom-left) or the
+         mobile action buttons (bottom-right). */
+      body.touch-mode #readout {
+        top: 16px; bottom: auto;
+      }
+      body.touch-mode #audio-controls {
+        top: 16px; bottom: auto;
+      }
     </style>
   </head>
   <body>
@@ -114,7 +353,27 @@
     <div id="hud">
       <div id="crosshair"></div>
       <div id="star-label" class="hidden"></div>
-      <div id="hint">Click to engage · WASD fly · Mouse look · Shift boost · Space/Ctrl up/down · Scroll speed</div>
+      <div id="click-to-start">
+        <div class="label">Click to start</div>
+        <div class="sub">Engage pointer lock to fly</div>
+      </div>
+      <div id="instructions">
+        <div class="ins-header">
+          <span class="ins-title">Controls</span>
+          <button id="ins-close" title="Hide (H)" aria-label="Close">×</button>
+        </div>
+        <div class="ins-grid">
+          <kbd>WASD</kbd><span>Fly</span>
+          <kbd>Mouse</kbd><span>Look</span>
+          <kbd>Shift</kbd><span>Boost</span>
+          <kbd>Space / Ctrl</kbd><span>Up / Down</span>
+          <kbd>Scroll</kbd><span>Speed</span>
+          <kbd>M</kbd><span>Mute music</span>
+          <kbd>N</kbd><span>Next track</span>
+          <kbd>Esc</kbd><span>Release mouse</span>
+        </div>
+      </div>
+      <button id="ins-reopen" class="hidden" title="Show controls (H)" aria-label="Show controls">?</button>
       <div id="readout">
         <div><span class="label">SPD</span><span id="r-speed">0.0</span></div>
         <div><span class="label">POS</span><span id="r-pos">0, 0, 0</span></div>
@@ -135,8 +394,50 @@
             <path class="body" d="M16 5 L19 5 L19 19 L16 19 Z"/>
           </svg>
         </div>
+        <div id="fullscreen-toggle" class="audio-btn" title="Toggle fullscreen (F)">
+          <svg viewBox="0 0 24 24">
+            <path class="fs-enter body" d="M4 4 H10 V6 H6 V10 H4 Z M14 4 H20 V10 H18 V6 H14 Z M4 14 H6 V18 H10 V20 H4 Z M14 20 V18 H18 V14 H20 V20 Z"/>
+            <path class="fs-exit body" d="M10 4 V10 H4 V8 H8 V4 Z M14 4 H16 V8 H20 V10 H14 Z M4 14 H10 V20 H8 V16 H4 Z M14 14 H20 V16 H16 V20 H14 Z"/>
+          </svg>
+        </div>
       </div>
       <div id="track-toast"></div>
+
+      <div id="mobile-hud" class="hidden">
+        <div id="look-zone"></div>
+
+        <div id="joystick">
+          <div id="joystick-base"></div>
+          <div id="joystick-nub"></div>
+        </div>
+
+        <div id="mobile-buttons">
+          <button id="btn-up"    class="mobile-btn"       aria-label="Up">▲</button>
+          <button id="btn-down"  class="mobile-btn"       aria-label="Down">▼</button>
+          <button id="btn-boost" class="mobile-btn boost" aria-label="Boost">»</button>
+        </div>
+
+        <div id="portrait-hint">Rotate your device for the best experience</div>
+
+        <div id="tap-to-explore">
+          <div class="rotate-recommendation">
+            <svg class="phone-rotate-icon" viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="22" y="8" width="20" height="38" rx="3" ry="3"
+                    fill="none" stroke="currentColor" stroke-width="2"/>
+              <circle cx="32" cy="41" r="1.5" fill="currentColor"/>
+              <line x1="28" y1="12" x2="36" y2="12"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M 10 52 Q 32 62 54 52" fill="none" stroke="currentColor"
+                    stroke-width="1.5" stroke-linecap="round"/>
+              <polyline points="50,48 54,52 50,56" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="rotate-text">Best experienced in landscape mode</div>
+          </div>
+          <div class="label">Tap to explore</div>
+          <div class="sub">Touch anywhere to begin</div>
+        </div>
+      </div>
     </div>
     <div id="loading">Initializing stellar neighborhood…</div>
     <script type="module" src="/src/main.ts"></script>
