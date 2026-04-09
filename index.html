@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Space Explorers</title>
+    <style>
+      html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #cfd8ff; }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; }
+
+      #hud { position: fixed; inset: 0; pointer-events: none; user-select: none; }
+      #crosshair {
+        position: absolute; left: 50%; top: 50%; width: 14px; height: 14px;
+        margin-left: -7px; margin-top: -7px;
+        border: 1px solid rgba(180, 200, 255, 0.65);
+        border-radius: 50%;
+        box-shadow: 0 0 6px rgba(120, 160, 255, 0.4) inset;
+      }
+      #crosshair::before, #crosshair::after {
+        content: ''; position: absolute; background: rgba(180, 200, 255, 0.65);
+      }
+      #crosshair::before { left: 50%; top: -6px; width: 1px; height: 4px; }
+      #crosshair::after  { top: 50%; left: -6px; height: 1px; width: 4px; }
+
+      #readout {
+        position: absolute; left: 16px; bottom: 16px;
+        font-size: 12px; letter-spacing: 0.05em;
+        background: rgba(10, 14, 30, 0.55);
+        padding: 8px 12px; border-radius: 4px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        backdrop-filter: blur(6px);
+        line-height: 1.6;
+      }
+      #readout .label { color: rgba(180, 200, 255, 0.55); margin-right: 6px; }
+
+      #hint {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, 40px);
+        font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+        color: rgba(200, 215, 255, 0.75);
+        background: rgba(10, 14, 30, 0.55);
+        padding: 8px 14px; border-radius: 4px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+      }
+      #hint.hidden { display: none; }
+
+      #star-label {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -28px);
+        font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgba(220, 230, 255, 0.95);
+        text-shadow: 0 0 8px rgba(100, 150, 255, 0.8);
+        white-space: nowrap;
+      }
+      #star-label.hidden { display: none; }
+
+      #loading {
+        position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        background: #000; color: rgba(200, 215, 255, 0.8); font-size: 12px; letter-spacing: 0.2em;
+        text-transform: uppercase; z-index: 10;
+      }
+      #loading.hidden { display: none; }
+
+      #audio-controls {
+        position: absolute; right: 16px; bottom: 16px;
+        display: flex; gap: 8px; align-items: center;
+        pointer-events: auto;
+      }
+      .audio-btn {
+        width: 30px; height: 30px;
+        background: rgba(10, 14, 30, 0.55);
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .audio-btn:hover { border-color: rgba(160, 190, 255, 0.4); background: rgba(20, 28, 50, 0.7); }
+      .audio-btn svg { width: 16px; height: 16px; display: block; }
+      .audio-btn svg .body { fill: rgba(200, 215, 255, 0.85); }
+      .audio-btn svg .stroke { stroke: rgba(200, 215, 255, 0.85); stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      #audio-icon svg .wave { stroke: rgba(200, 215, 255, 0.85); stroke-width: 1.6; fill: none; stroke-linecap: round; transition: opacity 0.2s; }
+      #audio-icon svg .slash { stroke: rgba(255, 140, 140, 0.9); stroke-width: 1.8; stroke-linecap: round; opacity: 0; transition: opacity 0.2s; }
+      #audio-icon.muted svg .wave { opacity: 0; }
+      #audio-icon.muted svg .slash { opacity: 1; }
+      #audio-icon.muted svg .body { fill: rgba(180, 190, 210, 0.55); }
+
+      #track-name {
+        font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgba(180, 200, 255, 0.65);
+        padding-right: 2px;
+        min-width: 56px; text-align: right;
+        user-select: none;
+      }
+
+      #track-toast {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, 80px);
+        font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase;
+        color: rgba(220, 230, 255, 0.95);
+        background: rgba(10, 14, 30, 0.65);
+        padding: 8px 16px; border-radius: 4px;
+        border: 1px solid rgba(120, 160, 255, 0.25);
+        backdrop-filter: blur(6px);
+        opacity: 0;
+        transition: opacity 0.35s;
+        pointer-events: none;
+      }
+      #track-toast.visible { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud">
+      <div id="crosshair"></div>
+      <div id="star-label" class="hidden"></div>
+      <div id="hint">Click to engage · WASD fly · Mouse look · Shift boost · Space/Ctrl up/down · Scroll speed</div>
+      <div id="readout">
+        <div><span class="label">SPD</span><span id="r-speed">0.0</span></div>
+        <div><span class="label">POS</span><span id="r-pos">0, 0, 0</span></div>
+      </div>
+      <div id="audio-controls">
+        <div id="track-name">Nebula</div>
+        <div id="audio-icon" class="audio-btn" title="Toggle ambient music (M)">
+          <svg viewBox="0 0 24 24">
+            <path class="body" d="M4 9v6h4l5 4V5L8 9H4z"/>
+            <path class="wave" d="M15.5 8.5 C17.5 10.5, 17.5 13.5, 15.5 15.5"/>
+            <path class="wave" d="M18 6 C21 9, 21 15, 18 18"/>
+            <line class="slash" x1="3" y1="21" x2="21" y2="3"/>
+          </svg>
+        </div>
+        <div id="track-next" class="audio-btn" title="Next track (N)">
+          <svg viewBox="0 0 24 24">
+            <path class="body" d="M5 5 L5 19 L15 12 Z"/>
+            <path class="body" d="M16 5 L19 5 L19 19 L16 19 Z"/>
+          </svg>
+        </div>
+      </div>
+      <div id="track-toast"></div>
+    </div>
+    <div id="loading">Initializing stellar neighborhood…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
